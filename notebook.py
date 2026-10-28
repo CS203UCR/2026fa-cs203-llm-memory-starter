@@ -751,5 +751,42 @@ def ask_gemma(
         display(Markdown(error_msg))
         return Markdown(error_msg)
 
+def ask_qwen(
+    prompt: str, temperature: float = 0.0, seed: int = 42
+) -> DisplayObject:
+    """Sends a prompt to the local Qwen3 model on 'eevee' with consistency settings,
+
+    and renders the response as Markdown in a Jupyter Notebook.
+    """
+    url = "http://eevee:11434/api/generate"
+
+    # Ollama uses an 'options' dictionary for generation parameters
+    payload = {
+        "model": "qwen3-coder",
+        "prompt": prompt,
+        "stream": False,
+        "options": {
+            "temperature": temperature,  # 0.0 = most deterministic/consistent
+            "seed": seed,  # Fixed seed = reproducible outputs
+        },
+    }
+
+    try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status()
+
+        # Extract the generated text from the Ollama response JSON
+        result_text = response.json().get("response", "")
+
+        # Render and display as Markdown in Jupyter
+        md_output = Markdown(result_text)
+        display(md_output)
+
+        return md_output
+
+    except requests.exceptions.RequestException as e:
+        error_msg = f"**Error connecting to Ollama server:** `{e}`"
+        display(Markdown(error_msg))
+        return Markdown(error_msg)
 
 print("Done loading notebook! We're good to go!");
